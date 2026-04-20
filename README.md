@@ -128,18 +128,95 @@ return result, seq_len
 --[next()]取迭代器的第一个元素。
 --TT:取字典中任意一个值。
 --T:获取序列真实长度。
+--[enumerate(feat_ids)]遍历列表时同时获取下标和值。
+
+### 词表构建
+
+```Python
+def build_vocab(df):
+    vocab = {}
+
+    def update_vocab(fid, val):
+        if isinstance(val, (int, float, np.integer, np.floating)):
+            val = int(val)
+            vocab[fid] = max(vocab.get(fid, 0), val + 1)
+        elif isinstance(val, np.ndarray) and val.size > 0:
+            vocab[fid] = max(vocab.get(fid, 0), int(val.max()) + 1)
+
+    for idx in range(len(df)):
+        item_feat = extract_feat_dict(df.iloc[idx]['item_feature'])
+        for fid, val in item_feat.items():
+            update_vocab(fid, val)
+        user_feat = extract_feat_dict(df.iloc[idx]['user_feature'])
+        for fid, val in user_feat.items():
+            update_vocab(fid, val)
+        seq = df.iloc[idx]['seq_feature']
+        for seq_key in ['action_seq', 'content_seq', 'item_seq']:
+            for feat in seq[seq_key]:
+                fid = int(feat['feature_id'])
+                arr = feat.get('int_array', None)
+                if arr is not None:
+                    arr = np.array(arr, dtype=np.int64)
+                    update_vocab(fid, arr)
+
+    vocab['item_id'] = int(df['item_id'].max()) + 1
+    return vocab
+```
+
+---作用：遍历整个数据集，找出每个 feature_id 对应的最大值，+1 后作为 Embedding 层的词表大小。\\\
+---这里+1是必要的，为了避免出现大于规定范围的值长度出现，因此+1可以很好的规避正好取到最大值的情况，防止发生错误。
 
 
+---这里有一个嵌套函数：
+```Python
+def build_vocab(df):
+    vocab = {}
 
+    def update_vocab(fid, val):
+        vocab[fid] = max(vocab.get(fid, 0), val + 1)
+    ...
 
+"""
+---两个函数的关系：
+【build_vocab】 是外层函数，它里面定义了 【vocab = {}】 这个变量。
+【update_vocab】 是内层函数，它直接访问并修改了外层的 【vocab】。
 
+【vocab.get(fid, 0)】：如果 【vocab】 里有 【fid】 这个键，就返回它的值；没有的话，返回 0。
+【val + 1】：把传进来的 【val】 加 1。
+【max(a, b)】：取两个数里的最大值，再赋值给 【vocab[fid]】。
+所以这段代码的作用是：给每个 fid 存一个不断更新的最大值。
 
+"""
+```
 
+```Python
+"""
+【什么是闭包？】
+---闭包的核心定义：
+---内层函数（update_vocab）引用了外层函数（build_vocab）的变量（vocab），并且内层函数可以在外部被调用时，依然记住并访问外层函数的变量。
+1. 用生活场景类比
+你可以把 【build_vocab】 想象成一个带保险箱的房间：
+房间里有个保险箱 【vocab = {}】，存着重要数据。
+【update_vocab】 是房间里的专属管理员，它知道保险箱的密码，能直接往里存东西、改东西。
+管理员不用每次开保险箱都让别人把密码（也就是 【vocab】）传给它，它天生就知道。
+2. 没有闭包会怎么样？
+如果不用闭包，你得把 vocab 当成参数传来传去，代码会变得很啰嗦：
+"""
+# 不用闭包的写法，很麻烦
+def update_vocab(vocab, fid, val):
+    vocab[fid] = max(vocab.get(fid, 0), val + 1)
 
+def build_vocab(df):
+    vocab = {}
+    # 每次调用 update_vocab 都要把 vocab 传进去
+    update_vocab(vocab, "apple", 5)
+    update_vocab(vocab, "apple", 7)
+    # ...
+"""
+---闭包的好处就是：内层函数自动 “记住” 了外层的变量，不用你手动传来传去，代码更干净。
 
-
-
-
+"""
+```
 
 
 
