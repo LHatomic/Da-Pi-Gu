@@ -21,16 +21,11 @@ MAX_ITEM_SEQ_LEN = 200
 
 ```
 
--没啥太大实际作用，分下类而已，为了接下来的步骤能有序。
--电脑能读懂的东西，一些进制和一些编码，需要转化成我们能看懂的类型。（做一步修改：//-我们看得懂，转化成电脑读的懂的类型！！）
+-没啥太大实际作用，分下类而已，为了接下来的步骤能有序。-电脑能读懂的东西，一些进制和一些编码，需要转化成我们能看懂的类型。（做一步修改：//-我们看得懂，转化成电脑读的懂的类型！！）
 
 ### 2.辅助函数（一）：extract_feat_dict（转化成字典）
 
--还是预处理阶段的第二步，这次需要将 feature 数组转化为 {feature_id:value} 的字典
--Feature-特征
--Value-值
--dict-字典
--extract-提取
+-还是预处理阶段的第二步，这次需要将 feature 数组转化为 {feature_id:value} 的字典 -Feature-特征 -Value-值 -dict-字典 -extract-提取
 
 ```Python
 def extract_feat_dict(feat_array):
