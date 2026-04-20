@@ -104,6 +104,52 @@ if len(feat_map) == 0:
 \\\np.zeros((max_len, len(feat_ids)), dtype=np.int64)：创建一个形状为 (max_len, 特征数) 的全零矩阵
 \\\-有一点说明：（ x , y ）:x{矩阵的行数} ；  y{矩阵的列数}。
 
+```Python
+""" 截断+左填充，组装矩阵 """
+actual_len = len(next(iter(feat_map.values())))
+start = max(0, actual_len - max_len)
+result = np.zeros((max_len, len(feat_ids)), dtype=np.int64)
+
+for col_idx, fid in enumerate(feat_ids):
+    arr = feat_map.get(fid, np.zeros(actual_len, dtype=np.int64))
+    truncated = arr[start:]
+    pad_len = max_len - len(truncated)
+    if pad_len > 0:
+        result[pad_len:, col_idx] = truncated
+    else:
+        result[:, col_idx] = truncated
+
+seq_len = min(actual_len, max_len)
+return result, seq_len
+```
+
+--[feat_map.value()]返回字典所有值的视图。
+--[iter()]把他变成迭代器。
+--[next()]取迭代器的第一个元素。
+--TT:取字典中任意一个值。
+--T:获取序列真实长度。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
